@@ -88,9 +88,6 @@ class Bird(pg.sprite.Sprite):
         引数2 screen：画面Surface
         """
         sum_mv = [0, 0]
-        self.speed = 10
-        if key_lst[pg.K_LSHIFT]:
-            self.speed = 20
         for k, mv in __class__.delta.items():
             if key_lst[k]:
                 sum_mv[0] += mv[0]
@@ -143,7 +140,7 @@ class Beam(pg.sprite.Sprite):
     """
     ビームに関するクラス
     """
-    def __init__(self, bird: Bird,angle0 = 0):
+    def __init__(self, bird: Bird):
         """
         ビーム画像Surfaceを生成する
         引数 bird：ビームを放つこうかとん
@@ -151,7 +148,6 @@ class Beam(pg.sprite.Sprite):
         super().__init__()
         self.vx, self.vy = bird.dire
         angle = math.degrees(math.atan2(-self.vy, self.vx))
-        angle += angle0
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -168,21 +164,6 @@ class Beam(pg.sprite.Sprite):
         self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
         if check_bound(self.rect) != (True, True):
             self.kill()
-
-
-class NeoBeam(pg.sprite.Sprite):
-    """
-    弾幕に関するクラス
-    """
-    def __init__(self,bird:Bird,num):
-        super().__init__()
-        self.bird = bird
-        self.num = num 
-    def gen_beams(self):
-        beams = []
-        for i in range(-50 ,+51, int(100 / (self.num-1))):
-            beams.append(Beam(self.bird,i))
-        return beams
 
 
 class Explosion(pg.sprite.Sprite):
@@ -241,28 +222,6 @@ class Enemy(pg.sprite.Sprite):
         self.rect.centery += self.vy
 
 
-class Shield(pg.sprite.Sprite):
-    '''
-    防御壁に関するクラス
-    '''
-    def __init__(self,bird:Bird,life=0):
-        super().__init__()
-        self.image = pg.Surface((20,48*2),flags=pg.SRCALPHA)
-        pg.draw.rect(self.image,(0,0,255),(0,0,20,48*2))
-        self.rect = self.image.get_rect()
-        self.life = life
-        vx,vy = bird.dire
-        col = math.degrees(math.atan2(-vy,vx))
-        self.image = pg.transform.rotozoom(self.image, col, 1.0)
-        self.rect.centery = bird.rect.centery+bird.rect.height*vy
-        self.rect.centerx = bird.rect.centerx+bird.rect.width*vx
-        
-    def update(self):
-        self.life -= 1
-        if self.life < 0:
-            self.kill()
-
-
 class Score:
     """
     打ち落とした爆弾，敵機の数をスコアとして表示するクラス
@@ -302,13 +261,12 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
+
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
-    Shields = pg.sprite.Group()
-    Shields_life = 0
     gravity_fields = pg.sprite.Group()
 
     tmr = 0
@@ -320,14 +278,6 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    if key_lst[pg.K_LSHIFT]:
-                        beams.add(NeoBeam(bird,5).gen_beams())
-                    else:
-                        beams.add(Beam(bird))
-                if event.key == pg.K_q and score.value >= 50 and Shields_life <= 0:
-                    Shields.add(Shield(bird,400))
-                    score.value -= 50
-                    Shields_life = 400
                     beams.add(Beam(bird))
                 if event.key == pg.K_RETURN and score.value >= 200:
                     gravity_fields.add(Gravity(400))
@@ -343,12 +293,11 @@ def main():
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                 bombs.add(Bomb(emy, bird))
 
-        for bomb in pg.sprite.groupcollide(bombs, Shields, True, False).keys():
-            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.value += 10  # 10点アップ
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
+
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
@@ -368,12 +317,7 @@ def main():
                 exps.add(Explosion(emy, 100))  # 爆発エフェクト
                 score.value += 10  # 10点アップ
 
-        if 0 <= Shields_life:
-            Shields_life -= 1
-
         bird.update(key_lst, screen)
-        Shields.update()
-        Shields.draw(screen)
         beams.update()
         beams.draw(screen)
         emys.update()
