@@ -309,8 +309,6 @@ def main():
                 return
             
 
-
-
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
