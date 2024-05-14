@@ -284,7 +284,6 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
-
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
     beams = pg.sprite.Group()
@@ -305,7 +304,7 @@ def main():
                         beams.add(NeoBeam(bird,5).gen_beams())
                     else:
                         beams.add(Beam(bird))
-                if event.key == pg.K_q and score.value >= -100000 and Shields_life <= 0:
+                if event.key == pg.K_q and score.value >= 50 and Shields_life <= 0:
                     Shields.add(Shield(bird,400))
                     score.value -= 50
                     Shields_life = 400
