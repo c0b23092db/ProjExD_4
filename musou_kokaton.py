@@ -148,6 +148,7 @@ class Beam(pg.sprite.Sprite):
         super().__init__()
         self.vx, self.vy = bird.dire
         angle = math.degrees(math.atan2(-self.vy, self.vx))
+        angle += angle0
         self.image = pg.transform.rotozoom(pg.image.load(f"fig/beam.png"), angle, 2.0)
         self.vx = math.cos(math.radians(angle))
         self.vy = -math.sin(math.radians(angle))
@@ -164,6 +165,21 @@ class Beam(pg.sprite.Sprite):
         self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
         if check_bound(self.rect) != (True, True):
             self.kill()
+
+
+class NeoBeam(pg.sprite.Sprite):
+    """
+    弾幕に関するクラス
+    """
+    def __init__(self,bird:Bird,num):
+        super().__init__()
+        self.bird = bird
+        self.num = num 
+    def gen_beams(self):
+        beams = []
+        for i in range(-50 ,+51, int(100 / (self.num-1))):
+            beams.append(Beam(self.bird,i))
+        return beams
 
 
 class Explosion(pg.sprite.Sprite):
@@ -285,7 +301,10 @@ def main():
                 return 0
             if event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
-                    beams.add(Beam(bird))
+                    if key_lst[pg.K_LSHIFT]:
+                        beams.add(NeoBeam(bird,5).gen_beams())
+                    else:
+                        beams.add(Beam(bird))
                 if event.key == pg.K_q and score.value >= -100000 and Shields_life <= 0:
                     Shields.add(Shield(bird,400))
                     score.value -= 50
