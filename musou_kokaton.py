@@ -272,7 +272,7 @@ def main():
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 beams.add(Beam(bird))
             if event.type == pg.KEYDOWN and event.key == pg.K_RSHIFT:
-                if score.value >= 100:
+                if score.value >= 100 and bird.state =="normal":
                     score.value -= 100
                     bird.state = "hyper"
                     bird.hyper_life = 500
